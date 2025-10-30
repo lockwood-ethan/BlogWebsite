@@ -1,10 +1,10 @@
-package com.lockwood.blog_website;
+package com.lockwood.blog;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class BlogWebsiteApplicationTests {
+class BlogApplicationTests {
 
 	@Test
 	void contextLoads() {

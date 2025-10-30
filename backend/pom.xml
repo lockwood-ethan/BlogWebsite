@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.lockwood</groupId>
-	<artifactId>blog-website</artifactId>
+	<artifactId>blog</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>blog-website</name>
-	<description>Personal blog website project</description>
+	<name>blog</name>
+	<description>Personal blog website</description>
 	<url/>
 	<licenses>
 		<license/>
