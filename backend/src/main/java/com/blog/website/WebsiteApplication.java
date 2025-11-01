@@ -1,13 +1,13 @@
-package com.lockwood.blog;
+package com.blog.website;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BlogApplication {
+public class WebsiteApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BlogApplication.class, args);
+		SpringApplication.run(WebsiteApplication.class, args);
 	}
 
 }
