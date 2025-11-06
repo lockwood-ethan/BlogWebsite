@@ -8,7 +8,7 @@ import com.blog.website.entities.User;
 
 public interface UserRepository extends CrudRepository<User, Long> {
 
-	User findByUserName(String username);
+	User findByUsername(String username);
 
 	User findById(long id);
 }

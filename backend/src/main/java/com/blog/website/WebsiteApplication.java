@@ -25,8 +25,9 @@ public class WebsiteApplication {
 		return (args) -> {
 			repository.save(new User("testuser", "password1", "admin@admin.com", Role.ADMIN));
 			log.info("User found with findByUsername: ");
-			User user = repository.findByUserName("testuser");
+			User user = repository.findByUsername("testuser");
 			log.info(user.toString());
+			log.info(Long.toString(user.getId()));
 			log.info("");
 		};
 	}

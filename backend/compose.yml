@@ -1,0 +1,13 @@
+services:
+  blogdb:
+    image: postgres:latest
+    restart: unless-stopped
+    env_file: .env 
+    environment:
+      - POSTGRES_USER=$POSTGRESDB_USER
+      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+      - POSTGRES_DB=$POSTGRESDB_DATABASE
+    ports:
+      - $POSTGRESDB_LOCAL_PORT:$POSTGRESDB_DOCKER_PORT
+    volumes:
+      - $PATH_TO_DB_VOLUME:/var/lib/postgres
