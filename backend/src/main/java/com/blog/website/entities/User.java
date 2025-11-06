@@ -1,5 +1,7 @@
 package com.blog.website.entities;
 
+import com.blog.website.enums.Role;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,29 +14,28 @@ public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 
-	@Column(name = "username")
 	private String username;
-
-	@Column(name = "password")
 	private String password;
-
-	@Column(name = "email")
 	private String email;
+	private Role role;
 
-	@Column(name = "role")
-	private String role;
-
-	public User() {
-
+	protected User() {
 	}
 
-	public User(String username, String password, String email, String role) {
+	public User(String username, String password, String email, Role role) {
 		super();
 		this.username = username;
 		this.password = password;
 		this.email = email;
 		this.role = role;
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+				"User[username='%s', email='%s']",
+				username, email);
 	}
 }
