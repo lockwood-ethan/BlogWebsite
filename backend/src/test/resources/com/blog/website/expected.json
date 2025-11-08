@@ -1,7 +1,0 @@
-{
-	"id":1,
-	"username":"username",
-	"password":"password1",
-	"email":"admin@admin1.com",
-	"role":Role.ADMIN
-}
