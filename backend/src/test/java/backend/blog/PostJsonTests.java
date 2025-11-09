@@ -27,4 +27,19 @@ public class PostJsonTests {
         assertThat(json.write(post)).hasJsonPathStringValue("@.text");
         assertThat(json.write(post)).extractingJsonPathStringValue("@.text").isEqualTo("Test Text");
     }
+
+    @Test
+    void postDeserializationTest() throws IOException {
+        String expected = """
+                {
+                    "id":23,
+                    "title":"Test Title",
+                    "text":"Test Text"
+                }
+                """;
+        assertThat(json.parse(expected)).isEqualTo(new Post(23L, "Test Title", "Test Text"));
+        assertThat(json.parseObject(expected).id()).isEqualTo(23);
+        assertThat(json.parseObject(expected).title()).isEqualTo("Test Title");
+        assertThat(json.parseObject(expected).text()).isEqualTo("Test Text");
+    }
 }
