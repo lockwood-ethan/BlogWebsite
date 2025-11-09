@@ -2,11 +2,16 @@ package backend.blog.controllers;
 
 import backend.blog.entities.Post;
 import backend.blog.repositories.PostRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -27,6 +32,17 @@ public class PostController {
         else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping()
+    private ResponseEntity<List<Post>> findAll(Pageable pageable) {
+        Page<Post> page = postRepository.findAll(
+                PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        pageable.getSortOr(Sort.by(Sort.Direction.DESC, "id"))
+                ));
+        return ResponseEntity.ok(page.getContent());
     }
 
     @PostMapping

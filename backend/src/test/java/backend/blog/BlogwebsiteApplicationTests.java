@@ -3,18 +3,21 @@ package backend.blog;
 import backend.blog.entities.Post;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import net.minidev.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class BlogwebsiteApplicationTests {
     @Autowired
     TestRestTemplate restTemplate;
@@ -29,10 +32,10 @@ class BlogwebsiteApplicationTests {
         assertThat(id).isEqualTo(23);
 
         String title = documentContext.read("$.title");
-        assertThat(title).isEqualTo("Test Title");
+        assertThat(title).isEqualTo("Title 1");
 
         String text = documentContext.read("$.body");
-        assertThat(text).isEqualTo("Test Body");
+        assertThat(text).isEqualTo("Body 1");
 	}
 
     @Test
@@ -43,6 +46,7 @@ class BlogwebsiteApplicationTests {
     }
 
     @Test
+    @DirtiesContext
     void shouldCreateANewPost() {
         Post post = new Post(null, "This title was added in a POST request", "This body was added in a POST request");
         ResponseEntity<Void> createResponse = restTemplate.postForEntity("/posts", post, Void.class);
@@ -60,5 +64,66 @@ class BlogwebsiteApplicationTests {
         assertThat(id).isEqualTo(1);
         assertThat(title).isEqualTo("This title was added in a POST request");
         assertThat(body).isEqualTo("This body was added in a POST request");
+    }
+
+    @Test
+    void shouldReturnAllPostsWhenListIsRequested() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/posts", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DocumentContext documentContext = JsonPath.parse(response.getBody());
+        int postCount = documentContext.read("$.length()");
+        assertThat(postCount).isEqualTo(3);
+
+        JSONArray ids = documentContext.read("$..id");
+        assertThat(ids).containsExactlyInAnyOrder(23, 24, 25);
+
+        JSONArray titles =  documentContext.read("$..title");
+        assertThat(titles).containsExactlyInAnyOrder("Title 1", "Title 2", "Title 3");
+
+        JSONArray bodies = documentContext.read("$..body");
+        assertThat(bodies).containsExactlyInAnyOrder("Body 1", "Body 2", "Body 3");
+    }
+
+    @Test
+    void shouldReturnAPageOfPosts() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/posts?page=0&size=1", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DocumentContext documentContext = JsonPath.parse(response.getBody());
+        JSONArray page = documentContext.read("[*]");
+        assertThat(page.size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldReturnASortedPageOfPosts() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/posts?page=0&size=1&sort=id,desc", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DocumentContext documentContext = JsonPath.parse(response.getBody());
+        JSONArray read =  documentContext.read("$[*]");
+        assertThat(read.size()).isEqualTo(1);
+
+        String title = documentContext.read("$[0].title");
+        assertThat(title).isEqualTo("Title 3");
+
+        String body = documentContext.read("$[0].body");
+        assertThat(body).isEqualTo("Body 3");
+    }
+
+    @Test
+    void shouldReturnASortedPageOfPostsWithNoParametersAndDefaultValues() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/posts", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DocumentContext documentContext = JsonPath.parse(response.getBody());
+        JSONArray page = documentContext.read("$[*]");
+        assertThat(page.size()).isEqualTo(3);
+
+        JSONArray titles =  documentContext.read("$..title");
+        assertThat(titles).containsExactly("Title 3", "Title 2", "Title 1");
+
+        JSONArray bodies = documentContext.read("$..body");
+        assertThat(bodies).containsExactly("Body 3", "Body 2", "Body 1");
     }
 }
