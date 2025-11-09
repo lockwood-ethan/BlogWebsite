@@ -18,14 +18,14 @@ public class PostJsonTests {
 
     @Test
     void postSerializationTest() throws IOException {
-        Post post = new Post(23L, "Test Title", "Test Text");
+        Post post = new Post(23L, "Test Title", "Test Body");
         assertThat(json.write(post)).isStrictlyEqualToJson("expected.json");
         assertThat(json.write(post)).hasJsonPathNumberValue("@.id");
         assertThat(json.write(post)).extractingJsonPathNumberValue("@.id").isEqualTo(23);
         assertThat(json.write(post)).hasJsonPathStringValue("@.title");
         assertThat(json.write(post)).extractingJsonPathStringValue("@.title").isEqualTo("Test Title");
-        assertThat(json.write(post)).hasJsonPathStringValue("@.text");
-        assertThat(json.write(post)).extractingJsonPathStringValue("@.text").isEqualTo("Test Text");
+        assertThat(json.write(post)).hasJsonPathStringValue("@.body");
+        assertThat(json.write(post)).extractingJsonPathStringValue("@.body").isEqualTo("Test Body");
     }
 
     @Test
@@ -34,12 +34,12 @@ public class PostJsonTests {
                 {
                     "id":23,
                     "title":"Test Title",
-                    "text":"Test Text"
+                    "body":"Test Body"
                 }
                 """;
-        assertThat(json.parse(expected)).isEqualTo(new Post(23L, "Test Title", "Test Text"));
+        assertThat(json.parse(expected)).isEqualTo(new Post(23L, "Test Title", "Test Body"));
         assertThat(json.parseObject(expected).id()).isEqualTo(23);
         assertThat(json.parseObject(expected).title()).isEqualTo("Test Title");
-        assertThat(json.parseObject(expected).text()).isEqualTo("Test Text");
+        assertThat(json.parseObject(expected).body()).isEqualTo("Test Body");
     }
 }

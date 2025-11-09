@@ -26,15 +26,15 @@ class BlogwebsiteApplicationTests {
         assertThat(id).isEqualTo(23);
 
         String title = documentContext.read("$.title");
-        assertThat(title).isEqualTo("Test");
+        assertThat(title).isEqualTo("Test Title");
 
-        String text = documentContext.read("$.text");
-        assertThat(text).isEqualTo("Test");
+        String text = documentContext.read("$.body");
+        assertThat(text).isEqualTo("Test Body");
 	}
 
     @Test
     void shouldNotReturnAPostWithAnUnknownId() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/posts/99", String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity("/posts/1000", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isBlank();
     }

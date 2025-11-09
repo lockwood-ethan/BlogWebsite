@@ -1,0 +1,1 @@
+INSERT INTO POST(ID, TITLE, BODY) VALUES (23, 'Test Title', 'Test Body');

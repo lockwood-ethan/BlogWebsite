@@ -1,4 +1,7 @@
 package backend.blog.repositories;
 
-public interface PostRepository {
+import backend.blog.entities.Post;
+import org.springframework.data.repository.CrudRepository;
+
+public interface PostRepository extends CrudRepository<Post, Long> {
 }
