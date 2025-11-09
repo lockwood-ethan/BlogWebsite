@@ -3,11 +3,10 @@ package backend.blog.controllers;
 import backend.blog.entities.Post;
 import backend.blog.repositories.PostRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Optional;
 
 @RestController
@@ -28,5 +27,15 @@ public class PostController {
         else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping
+    private ResponseEntity<Void> createPost(@RequestBody Post newPostRequest, UriComponentsBuilder ucb) {
+        Post savedPost = postRepository.save(newPostRequest);
+        URI locationOfNewPost = ucb
+                .path("posts/{id}")
+                .buildAndExpand(savedPost.id())
+                .toUri();
+        return ResponseEntity.created(locationOfNewPost).build();
     }
 }
