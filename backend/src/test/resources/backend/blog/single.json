@@ -1,5 +1,6 @@
 {
   "id": 23,
   "title": "Test Title",
-  "body": "Test Body"
+  "body": "Test Body",
+  "owner": "username1"
 }

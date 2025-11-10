@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,8 +25,8 @@ public class PostController {
     }
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<Post> findById(@PathVariable Long requestedId) {
-        Optional<Post> postOptional = postRepository.findById(requestedId);
+    private ResponseEntity<Post> findById(@PathVariable Long requestedId, Principal principal) {
+        Optional<Post> postOptional = Optional.ofNullable(postRepository.findByIdAndOwner(requestedId, principal.getName()));
         if (postOptional.isPresent()) {
             return ResponseEntity.ok(postOptional.get());
         }
@@ -35,8 +36,8 @@ public class PostController {
     }
 
     @GetMapping()
-    private ResponseEntity<List<Post>> findAll(Pageable pageable) {
-        Page<Post> page = postRepository.findAll(
+    private ResponseEntity<List<Post>> findAll(Pageable pageable, Principal principal) {
+        Page<Post> page = postRepository.findByOwner(principal.getName(),
                 PageRequest.of(
                         pageable.getPageNumber(),
                         pageable.getPageSize(),
@@ -46,8 +47,9 @@ public class PostController {
     }
 
     @PostMapping
-    private ResponseEntity<Void> createPost(@RequestBody Post newPostRequest, UriComponentsBuilder ucb) {
-        Post savedPost = postRepository.save(newPostRequest);
+    private ResponseEntity<Void> createPost(@RequestBody Post newPostRequest, UriComponentsBuilder ucb, Principal principal) {
+        Post postWithOwner = new Post(null, newPostRequest.title(), newPostRequest.body(), principal.getName());
+        Post savedPost = postRepository.save(postWithOwner);
         URI locationOfNewPost = ucb
                 .path("posts/{id}")
                 .buildAndExpand(savedPost.id())

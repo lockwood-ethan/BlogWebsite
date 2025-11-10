@@ -24,7 +24,9 @@ class BlogwebsiteApplicationTests {
 
 	@Test
 	void shouldReturnAPostWhenDataIsSaved()  {
-        ResponseEntity<String> response = restTemplate.getForEntity("/posts/23", String.class);
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts/23", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext documentContext = JsonPath.parse(response.getBody());
@@ -36,11 +38,16 @@ class BlogwebsiteApplicationTests {
 
         String text = documentContext.read("$.body");
         assertThat(text).isEqualTo("Body 1");
+
+        String owner = documentContext.read("$.owner");
+        assertThat(owner).isEqualTo("username1");
 	}
 
     @Test
     void shouldNotReturnAPostWithAnUnknownId() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/posts/1000", String.class);
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts/1000", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isBlank();
     }
@@ -48,27 +55,35 @@ class BlogwebsiteApplicationTests {
     @Test
     @DirtiesContext
     void shouldCreateANewPost() {
-        Post post = new Post(null, "This title was added in a POST request", "This body was added in a POST request");
-        ResponseEntity<Void> createResponse = restTemplate.postForEntity("/posts", post, Void.class);
+        Post post = new Post(null, "This title was added in a POST request", "This body was added in a POST request", "username1");
+        ResponseEntity<Void> createResponse = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .postForEntity("/posts", post, Void.class);
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         URI locationOfNewPost = createResponse.getHeaders().getLocation();
-        ResponseEntity<String> getResponse = restTemplate.getForEntity(locationOfNewPost, String.class);
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity(locationOfNewPost, String.class);
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
         Number id = documentContext.read("$.id");
         String title = documentContext.read("$.title");
         String body = documentContext.read("$.body");
+        String owner = documentContext.read("$.owner");
 
         assertThat(id).isEqualTo(1);
         assertThat(title).isEqualTo("This title was added in a POST request");
         assertThat(body).isEqualTo("This body was added in a POST request");
+        assertThat(owner).isEqualTo("username1");
     }
 
     @Test
     void shouldReturnAllPostsWhenListIsRequested() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/posts", String.class);
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext documentContext = JsonPath.parse(response.getBody());
@@ -83,11 +98,14 @@ class BlogwebsiteApplicationTests {
 
         JSONArray bodies = documentContext.read("$..body");
         assertThat(bodies).containsExactlyInAnyOrder("Body 1", "Body 2", "Body 3");
+
     }
 
     @Test
     void shouldReturnAPageOfPosts() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/posts?page=0&size=1", String.class);
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts?page=0&size=1", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext documentContext = JsonPath.parse(response.getBody());
@@ -97,7 +115,9 @@ class BlogwebsiteApplicationTests {
 
     @Test
     void shouldReturnASortedPageOfPosts() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/posts?page=0&size=1&sort=id,desc", String.class);
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts?page=0&size=1&sort=id,desc", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext documentContext = JsonPath.parse(response.getBody());
@@ -113,7 +133,9 @@ class BlogwebsiteApplicationTests {
 
     @Test
     void shouldReturnASortedPageOfPostsWithNoParametersAndDefaultValues() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/posts", String.class);
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext documentContext = JsonPath.parse(response.getBody());
@@ -125,5 +147,34 @@ class BlogwebsiteApplicationTests {
 
         JSONArray bodies = documentContext.read("$..body");
         assertThat(bodies).containsExactly("Body 3", "Body 2", "Body 1");
+    }
+
+    @Test
+    void shouldNotReturnAPostWhenUsingBadCredentials() {
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("BAD-USER", "abc123")
+                .getForEntity("/posts/23", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        response = restTemplate
+                .withBasicAuth("username1", "BAD-PASSWORD")
+                .getForEntity("/posts/23", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldRejectUsersWhoAreNotPostOwners() {
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("noPostOwner", "qrs456")
+                .getForEntity("/posts/23", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldNotAllowAccessToPostsTheyDoNotOwn() {
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts/26", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }
