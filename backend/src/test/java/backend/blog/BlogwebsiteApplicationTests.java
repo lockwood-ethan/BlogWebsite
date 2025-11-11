@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
@@ -20,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 //@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class BlogwebsiteApplicationTests {
     @Autowired
-    TestRestTemplate restTemplate;
+    TestRestTemplate restTemplate = new TestRestTemplate(TestRestTemplate.HttpClientOption.ENABLE_COOKIES);
 
 	@Test
 	void shouldReturnAPostWhenDataIsSaved()  {
@@ -176,5 +175,83 @@ class BlogwebsiteApplicationTests {
                 .withBasicAuth("username1", "abc123")
                 .getForEntity("/posts/26", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DirtiesContext
+    void shouldUpdateAnExistingPost() {
+        Post postUpdate = new Post(null, "This Title has been updated", "This Body has been updated", null);
+        HttpEntity<Post> entity = new HttpEntity<>(postUpdate);
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .exchange("/posts/23", HttpMethod.PUT, entity, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts/23", String.class);
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+        Number id = documentContext.read("$.id");
+        String title = documentContext.read("$.title");
+        String body = documentContext.read("$.body");
+        assertThat(id).isEqualTo(23);
+        assertThat(title).isEqualTo("This Title has been updated");
+        assertThat(body).isEqualTo("This Body has been updated");
+    }
+
+    @Test
+    void shouldNotUpdatePostThatDoesNotExist() {
+        Post unknownPost = new Post(null, "This Title has been updated", "This Body has been updated", null);
+        HttpEntity<Post> entity = new HttpEntity<>(unknownPost);
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .exchange("/posts/1000", HttpMethod.PUT, entity, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldNotUpdateACashCardThatIsOwnedBySomeoneElse() {
+        Post unknownPost = new Post(null, "This Title has been updated", "This Body has been updated", null);
+        HttpEntity<Post> entity = new HttpEntity<>(unknownPost);
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .exchange("/posts/26", HttpMethod.PUT, entity, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DirtiesContext
+    void shouldDeleteAnExistingPost() {
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .exchange("/posts/23", HttpMethod.DELETE, null, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/posts/23", String.class);
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldNotDeleteAPostThatDoesNotExist() {
+        ResponseEntity<Void> deleteResponse = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .exchange("/posts/1000", HttpMethod.DELETE, null, Void.class);
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldNotAllowDeletionOfPostsTheyDoNotOwn() {
+        ResponseEntity<Void> deleteResponse = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .exchange("/posts/26", HttpMethod.DELETE, null, Void.class);
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("newUsername", "xyz789")
+                .getForEntity("/posts/26", String.class);
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }

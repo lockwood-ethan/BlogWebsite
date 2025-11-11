@@ -13,7 +13,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.security.Principal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/posts")
@@ -26,9 +25,9 @@ public class PostController {
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<Post> findById(@PathVariable Long requestedId, Principal principal) {
-        Optional<Post> postOptional = Optional.ofNullable(postRepository.findByIdAndOwner(requestedId, principal.getName()));
-        if (postOptional.isPresent()) {
-            return ResponseEntity.ok(postOptional.get());
+        Post post = findPost(requestedId, principal);
+        if (post != null) {
+            return ResponseEntity.ok(post);
         }
         else {
             return ResponseEntity.notFound().build();
@@ -55,5 +54,29 @@ public class PostController {
                 .buildAndExpand(savedPost.id())
                 .toUri();
         return ResponseEntity.created(locationOfNewPost).build();
+    }
+
+    @PutMapping("/{requestedId}")
+    private ResponseEntity<Void> putPost(@PathVariable Long requestedId, @RequestBody Post postUpdate, Principal principal) {
+        Post post = findPost(requestedId, principal);
+        if (post != null) {
+            Post updatedPost = new Post(post.id(), postUpdate.title(), postUpdate.body(), principal.getName());
+            postRepository.save(updatedPost);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/{id}")
+    private ResponseEntity<Void> deletePost(@PathVariable Long id, Principal principal) {
+        if (postRepository.existsByIdAndOwner(id, principal.getName())) {
+            postRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    private Post findPost(Long requestedId, Principal principal) {
+        return postRepository.findByIdAndOwner(requestedId, principal.getName());
     }
 }
