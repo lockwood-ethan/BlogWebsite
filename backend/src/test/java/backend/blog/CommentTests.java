@@ -37,4 +37,20 @@ public class CommentTests {
         JSONArray comments = documentContext.read("$..body");
         assertThat(comments).containsExactlyInAnyOrder("Comment Body 1",  "Comment Body 2");
     }
+
+    @Test
+    void shouldReturnSavedComment() {
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/comments/comment/32", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void shouldNotReturnCommentsWithUnknownPostId() {
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("username1", "abc123")
+                .getForEntity("/comments/comment/12",  String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }

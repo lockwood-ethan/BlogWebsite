@@ -23,6 +23,17 @@ public class CommentController {
         this.commentRepository = commentRepository;
     }
 
+    @GetMapping("/comment/{requestedId}")
+    private ResponseEntity<Comment> findById(@PathVariable Long requestedId) {
+        Comment comment = commentRepository.findCommentById(requestedId);
+        if (comment != null) {
+            return ResponseEntity.ok(comment);
+        }
+        else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/{postId}")
     private ResponseEntity<List<Comment>> findAll(@PathVariable Long postId, Pageable pageable) {
         Page<Comment> page = commentRepository.findByPostId(postId,

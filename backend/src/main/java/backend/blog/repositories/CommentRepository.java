@@ -8,5 +8,6 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface CommentRepository extends CrudRepository<Comment, Long>, PagingAndSortingRepository<Comment, Long> {
+    Comment findCommentById(Long id);
     Page<Comment> findByPostId(Long postId, PageRequest pagerequest);
 }
