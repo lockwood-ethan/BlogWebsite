@@ -1,4 +1,7 @@
 package backend.blog.repositories;
 
-public interface CommentRepository {
+import backend.blog.entities.Comment;
+import org.springframework.data.repository.CrudRepository;
+
+public interface CommentRepository extends CrudRepository<Comment, Long> {
 }
